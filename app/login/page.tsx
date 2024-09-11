@@ -1,16 +1,137 @@
 "use client"
-import LoginForm from "@/components/LoginForm";
+import Link from "next/link"
 import { useCallback, useState } from "react";
+import axios from "axios";
+import { signIn } from "next-auth/react"
+import { useRouter } from "next/navigation";
+
+import { Button } from "@/components/ui/button"
+import {
+   Card,
+   CardContent,
+   CardDescription,
+   CardHeader,
+   CardTitle,
+} from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 function LoginPage() {
+   const router = useRouter();
+   const [email, setEmail] = useState("");
+   const [username, setUsername] = useState("");
+   const [password, setPassword] = useState("");
+
+   const [variant, setVariant] = useState("login");
+
+   const toggleVariant = useCallback(() => {
+      setVariant((currentVariant) => (currentVariant === "login" ? "register" : "login"));
+   }, []);
+
+   const login = useCallback(async () => {
+      try {
+         await signIn("credentials", {
+            email,
+            password,
+            redirect: false,
+            callbackUrl: "/",
+         });
+         console.log("Logged in successfully");
+         router.push("/");
+      } catch (error) {
+         console.log(error);
+      }
+   }, [email, password, router]);
+
+   const register = useCallback(async () => {
+      try {
+         const response = await axios.post("/api/register", {
+            email,
+            username,
+            password
+         });
+
+         login();
+      } catch (error) {
+         if (axios.isAxiosError(error)) {
+            console.error('Registration error:', error.response?.data || error.message);
+         } else {
+            console.error('An unexpected error occurred:', error);
+         }
+      }
+   }, [email, username, password, login]);
+
    return (
       <div>
          <nav className="px-12 py-5">
-            <img src="/images/logo-light.jpg" alt="Logo" className="h-28" />
+            <img src="/images/logo-light.jpg" alt="Logo" className="h-24" />
          </nav>
-         <LoginForm />
+         <Card className="mx-auto max-w-sm">
+            <CardHeader>
+               <CardTitle className="text-2xl">{variant === "login" ? "Sign in" : "Register"}</CardTitle>
+               <CardDescription className="text-mutedForeground">
+                  Enter your email below to login to your account
+               </CardDescription>
+            </CardHeader>
+            <CardContent>
+               <div className="grid gap-4">
+                  {variant === "register" && (
+                     <div className="grid gap-2">
+                        <Label htmlFor="username">Username</Label>
+                        <Input
+                           id="username"
+                           value={username}
+                           onChange={(ev: any) => setUsername(ev.target.value)}
+                           placeholder="adoodevv"
+                           required
+                        />
+                     </div>
+                  )}
+                  <div className="grid gap-2">
+                     <Label htmlFor="email">Email</Label>
+                     <Input
+                        id="email"
+                        value={email}
+                        onChange={(ev: any) => setEmail(ev.target.value)}
+                        type="email"
+                        placeholder="me@example.com"
+                        required
+                     />
+                  </div>
+                  <div className="grid gap-2">
+                     <div className="flex items-center">
+                        <Label htmlFor="password">Password</Label>
+                        <Link href="#" className="ml-auto inline-block text-sm underline">
+                           Forgot your password?
+                        </Link>
+                     </div>
+                     <Input
+                        id="password"
+                        value={password}
+                        onChange={(ev: any) => setPassword(ev.target.value)}
+                        type="password"
+                        required
+                     />
+                  </div>
+                  <Button onClick={variant === 'login' ? login : register} type="submit" className="w-full bg-primary text-primaryForeground">
+                     {variant === "login" ? "Login" : "Sign up"}
+                  </Button>
+                  {variant === "login" && (
+                     <Button variant="outline" className="w-full">
+                        Login with Google
+                     </Button>
+                  )}
+               </div>
+               <div className="mt-4 text-center text-sm">
+                  {variant === "login" ? "Don't have an account?" : "Already have an account?"}{" "}
+                  <span onClick={toggleVariant} className="cursor-pointer underline">
+                     {variant === "login" ? "Create an account" : "Login"}
+                  </span>
+               </div>
+            </CardContent>
+         </Card>
       </div>
-   );
-}
 
+   )
+}
 export default LoginPage;

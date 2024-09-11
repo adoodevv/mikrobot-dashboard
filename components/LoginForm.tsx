@@ -1,6 +1,7 @@
 "use client"
 import Link from "next/link"
 import { useCallback, useState } from "react";
+import axios from "axios";
 
 import { Button } from "@/components/ui/button"
 import {
@@ -15,6 +16,7 @@ import { Label } from "@/components/ui/label"
 
 export function LoginForm() {
    const [email, setEmail] = useState("");
+   const [username, setUsername] = useState("");
    const [password, setPassword] = useState("");
 
    const [variant, setVariant] = useState("login");
@@ -22,6 +24,17 @@ export function LoginForm() {
    const toggleVariant = useCallback(() => {
       setVariant((currentVariant) => (currentVariant === "login" ? "register" : "login"));
    }, []);
+
+   const register = useCallback(async () => {
+      try {
+         await axios.post("/api/register.ts", {
+            email,
+            password
+         });
+      } catch (error) {
+         console.log(error);
+      }
+   }, [email, password]);
 
    return (
       <Card className="mx-auto max-w-sm">
@@ -33,6 +46,18 @@ export function LoginForm() {
          </CardHeader>
          <CardContent>
             <div className="grid gap-4">
+               {variant === "register" && (
+                  <div className="grid gap-2">
+                     <Label htmlFor="username">Username</Label>
+                     <Input
+                        id="username"
+                        value={username}
+                        onChange={(ev: any) => setUsername(ev.target.value)}
+                        placeholder="adoodevv"
+                        required
+                     />
+                  </div>
+               )}
                <div className="grid gap-2">
                   <Label htmlFor="email">Email</Label>
                   <Input
@@ -54,12 +79,12 @@ export function LoginForm() {
                   <Input
                      id="password"
                      value={password}
-                     onChange={(ev: any) => setEmail(ev.target.value)}
+                     onChange={(ev: any) => setPassword(ev.target.value)}
                      type="password"
                      required
                   />
                </div>
-               <Button type="submit" className="w-full bg-primary text-primaryForeground">
+               <Button onClick={register} type="submit" className="w-full bg-primary text-primaryForeground">
                   {variant === "login" ? "Login" : "Sign up"}
                </Button>
                {variant === "login" && (
